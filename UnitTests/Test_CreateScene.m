@@ -1,4 +1,4 @@
-function [camera,pairs,box,worldfig,worldAxes]=CreateScene()
+function [camera,pairs,box,worldfig,worldAxes]=Test_CreateScene()
 %note: any object not returned is deleted from function workspace
 %activating its destructor!!
 
