@@ -6,7 +6,6 @@ function [box,p3d,worldfig,worldAxes]=Slam_CreateScene(a,n)
 %activating its destructor!!
 
 s = 0.2; % Numeric factor here to scale the points togther
-
 %% Define World Axes
 worldfig=figure;
 worldAxes=axes(worldfig,...
@@ -21,8 +20,9 @@ box=hyperrectangle3d(lengths,center,worldAxes);
 box.plot('facecolor','none');
 
 %points
+rng(0); %repeatability
 P = s*a*(rand(n,3)-1/2); 
-p3d = point3d.empty(12,0);
+p3d = point3d.empty(n,0);
 for ii=1:n
     p3d(ii) = point3d(P(ii,:),worldAxes);
 end
