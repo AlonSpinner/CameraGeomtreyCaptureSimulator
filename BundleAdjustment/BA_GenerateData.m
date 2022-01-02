@@ -1,22 +1,18 @@
-%% This script create data for slam
-%cameraP - camera poses
-%cameraTargetVector - camera orientation
-%Z(ii,jj,1:2) - [u,v] of point jj in pose ii
+%% This script creates data for our slam problem
 
+% Hyper Parameters:
 a = 3; % side length of world containing box
 n = 12; % number of points
 dt = 0.1;
 T=10;
 tPointsAmount = floor(T/dt);
 STDv = 2;
-
+%% build the Scene
 [box,p3d,worldfig,worldAxes]=Slam_CreateScene(a,n);
-
 %stupid matlab syntax. cell arrays can be converted into varargin
 %https://www.mathworks.com/matlabcentral/answers/8266-convert-array-to-argument-list
 p3dCell = cell(n,1);
 for ii=1:n, p3dCell{ii}=p3d(ii); end
-
 %% Run Simulation for Data
 theta = linspace(0,2*pi,tPointsAmount);
 x = a/2*cos(theta)';
@@ -50,14 +46,14 @@ for ii=1:tPointsAmount
     
     pause(0.01);
 end
-
 %% 
 disp('data generated sucessfully, and is placed into workspace');
-disp('function handles accept x - [x,y,theta] and then l - [lx,ly,lz]');
+disp('Now storing it in /BundleAdjustment/BAData.mat')
+disp('Reminder: function handles accept x - [x,y,theta] and then l - [lx,ly,lz]');
 
 [fhz,fhz_x,fhz_l] = camera.compute2DMeasurementModel;
 gt_pose = [cameraP(:,[1,2]),mod(theta+pi,2*pi)']; %angle to location + 180 to turn towards center
 
 proj = matlab.project.rootProject;
-proj.RootFolder
-save('slamData','gt_pose','fhz','fhz_x','fhz_l','Z','STDv');
+filename = fullfile(proj.RootFolder,'BundleAdjustment','BAData');
+save(filename,'gt_pose','fhz','fhz_x','fhz_l','Z','STDv');
