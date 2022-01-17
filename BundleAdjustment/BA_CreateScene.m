@@ -1,4 +1,4 @@
-function [box,p3d,worldfig,worldAxes]=Slam_CreateScene(a,n)
+function [box,p3d,worldfig,worldAxes]=BA_CreateScene(a,n)
 %n = number of points
 %a = side length of world containing box
 %
