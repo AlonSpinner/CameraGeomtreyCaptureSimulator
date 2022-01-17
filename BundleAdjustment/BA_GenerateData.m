@@ -18,17 +18,18 @@ for ii=1:n, p3dCell{ii}=p3d(ii); end
 theta = linspace(0,2*pi,tPointsAmount);
 x = a/2*cos(theta)';
 y = a/2*sin(theta)';
-cameraP = [x,y,zeros(tPointsAmount,1)];
-cameraTargetVector = -cameraP/(a/2);
+%% Build Trajectory
+traj.pos = [x,y,zeros(tPointsAmount,1)];
+traj.TargetVector = -traj.pos/(a/2);
 
 hold(worldAxes,'on');
-h_track=plot3(worldAxes,cameraP(:,1),cameraP(:,2),cameraP(:,3),'color','black');
+h_track=plot3(worldAxes,traj.pos(:,1),traj.pos(:,2),traj.pos(:,3),'color','black');
 hold(worldAxes,'off');
-
 %Define Camera
-camera=camera3d(cameraP(1,:),cameraTargetVector(1,:),worldAxes);
+camera=camera3d(traj.pos(1,:),traj.TargetVector(1,:),worldAxes);
 camera.plot;
 
+%% Simulate
 Z = zeros(tPointsAmount,n,2);
 for ii=1:tPointsAmount
     camera.position=cameraP(ii,:);

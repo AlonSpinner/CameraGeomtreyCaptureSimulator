@@ -9,45 +9,58 @@ classdef camera3d < handle
         py(1,1)=512/2;
         K(3,3);
         %Extrinsics
+        position(3,1);
+        targetVector(3,1);
+        rollAngle(1,1)=0; %rad
         pose(4,4);
         %Intrinsics+Extrinsics
         ProjMat(3,4)
-        %Physical
+        %Misc
         cameraSize(1,1)=0.1;
-        %Graphics
         worldAxes(1,1)=gobjects(1,1);
         imagePlaneFig(1,1)=gobjects(1,1);
         imagePlaneAxes(1,1)=gobjects(1,1);
         graphicHandle(1,1)=gobjects(1,1);
     end
     methods
-        function obj=camera3d(worldAxes)
+        function obj=camera3d(position,targetVector,worldAxes)
             if nargin<4 %worldAxes not provided
                 worldAxes=gca;
             end
             
             obj.worldAxes=worldAxes;
-            obj.pose = eye(4);
+            obj.position=position;
+            obj.targetVector=targetVector;
             
             computeK(obj);
             computePose(obj);
             computeProjMat(obj)
         end
-        function pose = computePose(obj,t,targetVec,upVec)
-            %all inputs are column vecs
-                % t - translation vector of camera pin hole center in
-                % global coordinates. t_G->C in G
-                % targetVec and upVec are for rotation
-
-            %follows Matlab Camrea Conventions: https://www.mathworks.com/help/vision/gs/coordinate-systems.html
-            % Z is forward #targetVec
-            % Y is pointing down -#upVec
-            % X is to the right #targetVec X upVec
+        function pose = computePose(obj)
+            %Systems: 0(world) -> 1(x->target) -> 2(roll)
+            R2t1=eul2rotm([obj.rollAngle,0,0]);
             
-            x = cross(targetVec,upVec);
-            RCtG=[x,-upVec,targetVec]; 
+            %R1t0 -
+            %z1 is the target vector
+            %upwards leanning. %will keep camera x-z plane parallel
+            %to ground as much as possible in movement.
+            %follows Camrea Conventions:
+            %1) Z is forward
+            %2) X is to the right
+            %3) Y is pointing down
             
-            pose=[RCtG,t;...
+            z1=obj.targetVector;
+            
+            z0=[0,0,1]';
+            x1=-cross(z0,obj.targetVector); %size is not 1... cross=a*b*sin(theta)
+            x1=x1/norm(x1);
+            y1=cross(z1,x1);
+            y1=y1/norm(y1);
+            
+            RCtG=[x1,y1,z1];
+            
+            t=obj.position;
+            pose=[R2t0,t;...
                 [0 0 0 1]];
             obj.pose = pose;
         end
