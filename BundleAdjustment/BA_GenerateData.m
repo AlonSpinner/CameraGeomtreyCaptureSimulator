@@ -1,3 +1,4 @@
+
 %% This script creates data for our slam problem
 
 % Hyper Parameters:
@@ -8,7 +9,7 @@ T=10;
 tPointsAmount = floor(T/dt);
 STDv = 2;
 %% build the Scene
-[box,p3d,worldfig,worldAxes]=Slam_CreateScene(a,n);
+[box,p3d,worldfig,worldAxes]=BA_CreateScene(a,n);
 %stupid matlab syntax. cell arrays can be converted into varargin
 %https://www.mathworks.com/matlabcentral/answers/8266-convert-array-to-argument-list
 p3dCell = cell(n,1);
