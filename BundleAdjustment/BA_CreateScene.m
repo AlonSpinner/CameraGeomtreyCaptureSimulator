@@ -1,4 +1,4 @@
-function [box,p3d,worldfig,worldAxes]=Slam_CreateScene(a,n)
+function [box,p3d,worldfig,worldAxes]=BA_CreateScene(a,n)
 %n = number of points
 %a = side length of world containing box
 %
@@ -11,7 +11,7 @@ worldfig=figure;
 worldAxes=axes(worldfig,...
     'DataAspectRatioMode','manual');
 view(worldAxes,3);
-xlabel(worldAxes,'x'); ylabel(worldAxes,'y'); zlabel(worldAxes,'z');
+xlabel(worldAxes,'x'); ylabel(worldAxes,'y'); zlabel(worldAxes,'z'); axis(worldAxes,"equal");
 %% Define Objects
 %world containing box
 lengths=[a,a,a];
@@ -28,6 +28,6 @@ for ii=1:n
 end
 %% plot
 for ii=1:n
-    p3d(ii).plot('filled');
+    p3d(ii).plot();
 end
 end
