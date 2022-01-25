@@ -7,9 +7,9 @@ classdef camera3d < handle
         fy(1,1)=512; %1 meter length in 1 meter disatnce will apear as fx pixels
         px(1,1)=512/2;
         py(1,1)=512/2;
-        K(3,3);
+        K(3,3) =[512,0,512/2; 0,512,512/2; 0,0,1];
         %Extrinsics
-        pose(4,4);
+        pose(4,4) = eye(4); %t(G)G->C, RG2C
         %Intrinsics+Extrinsics
         ProjMat(3,4)
         %Physical
@@ -22,37 +22,39 @@ classdef camera3d < handle
     end
     methods
         function obj=camera3d(worldAxes)
-            if nargin<4 %worldAxes not provided
+            %all vec inputs are column vecs, see method 'computePose'
+            if nargin<1 %worldAxes not provided
                 worldAxes=gca;
             end
-            
             obj.worldAxes=worldAxes;
-            obj.pose = eye(4);
-            
-            computeK(obj);
-            computePose(obj);
-            computeProjMat(obj)
         end
-        function pose = computePose(obj,t,targetVec,upVec)
+        function pose = computePose(obj,pos,targetVec,upVec)
+            if nargin == 2 %full pose was given in pos - a 4x4 matrix
+                obj.pose = pos; 
+                obj.computeProjMat(); %if updated pose, also need to update projmat
+                return
+            end
+            
+            %ELSE
             %all inputs are column vecs
-                % t - translation vector of camera pin hole center in
-                % global coordinates. t_G->C in G
+                % pos - translation vector of camera pin hole center in
+                % global frame. %t(G)G->C
                 % targetVec and upVec are for rotation
 
             %follows Matlab Camrea Conventions: https://www.mathworks.com/help/vision/gs/coordinate-systems.html
             % Z is forward #targetVec
             % Y is pointing down -#upVec
-            % X is to the right #targetVec X upVec
+            % X is to the right
             
             x = cross(targetVec,upVec);
-            RCtG=[x,-upVec,targetVec]; 
+            RGtC=[x,-upVec,targetVec]; 
             
-            pose=[RCtG,t;...
+            pose=[RGtC,pos;... 
                 [0 0 0 1]];
-            obj.pose = pose;
+            obj.pose = pose; %t(G)G->C, RG2C
+            obj.computeProjMat(); %if updated pose, also need to update projmat
         end
         function plot(obj)
-            computePose(obj); %recompute pose in case that user changed properties
             plotpose=rigid3d(obj.pose');
             
             if isvalid(obj.graphicHandle) &&...
@@ -72,7 +74,7 @@ classdef camera3d < handle
                     isa(obj.imagePlaneFig,'matlab.ui.Figure')
                 cla(obj.imagePlaneAxes);
             else %else.. create a new window
-                obj.imagePlaneFig=figure('color',[1,1,1]); %open new figure
+                obj.imagePlaneFig=figure('color',[1,1,1],'Visible','off'); %open new figure
                 obj.imagePlaneAxes=axes('parent',obj.imagePlaneFig,...
                     'view',[0 90],...
                     'XLim',[0,obj.w],...
@@ -102,7 +104,7 @@ classdef camera3d < handle
                 end
             end
             
-            F = getframe(obj.imagePlaneFig);% Grab the rendered frame
+            F = getframe(obj.imagePlaneAxes);% Grab the rendered frame
             image=F.cdata;
         end
         function [u,v]=ProjectOnImage(obj,geo3d)

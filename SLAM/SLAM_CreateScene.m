@@ -1,4 +1,8 @@
-function [box,p3d,worldfig,worldAxes]=BA_CreateScene(a,n)
+function [box,p3d,worldAxes]=SLAM_CreateScene(a,n,worldAxes)
+if nargin < 3
+    worldfig=figure;
+    worldAxes=axes(worldfig);
+end
 %n = number of points
 %a = side length of world containing box
 %
@@ -7,9 +11,7 @@ function [box,p3d,worldfig,worldAxes]=BA_CreateScene(a,n)
 
 s = 0.2; % Numeric factor here to scale the points togther
 %% Define World Axes
-worldfig=figure;
-worldAxes=axes(worldfig,...
-    'DataAspectRatioMode','manual');
+set(worldAxes,'DataAspectRatioMode','manual');
 view(worldAxes,3);
 xlabel(worldAxes,'x'); ylabel(worldAxes,'y'); zlabel(worldAxes,'z');
 %% Define Objects

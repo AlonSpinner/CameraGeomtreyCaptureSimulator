@@ -7,7 +7,7 @@ classdef point3d < handle
     end
     methods
         function obj=point3d(P,worldAxes) %constructor
-            if nargin<3 %worldAxes not provided
+            if nargin<2 %worldAxes not provided
                 worldAxes=gca;
             end
             obj.P=P;
