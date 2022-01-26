@@ -1,23 +1,27 @@
 
 %% This script creates data for our slam problem
 
-% Hyper Parameters:
+%-----------------Hyper Parameters:
 a = 3; % side length of world containing box
-n = 12; % number of points
-dt = 0.1;
-T=1;
-tPointsAmount = floor(T/dt);
-STDv = 2;
+nLM = 12; % number of landmarks
+dt = 0.1; %[s]
+T=1; %[s]
+tPointsAmount = floor(T/dt); %amount of frames
+
+%----------------Measurement Noise;
+STDv = 2; %visual
+STDt = a/10; %translation
+%no rotation noise implemented
 %%
 fig = figure('color',[1,1,1],'units','normalized','Position',[0.2,0.2,0.6,0.4]);
 worldAxes = subplot(1,2,1,'parent',fig);
 cameraAxes = subplot(1,2,2,'parent',fig);
 %% build the Scene
-[box,p3d]=SLAM_CreateScene(a,n,worldAxes);
+[box,p3d]=SLAM_CreateScene(a,nLM,worldAxes);
 %stupid matlab syntax. cell arrays can be converted into varargin
 %https://www.mathworks.com/matlabcentral/answers/8266-convert-array-to-argument-list
-p3dCell = cell(n,1);
-for ii=1:n, p3dCell{ii}=p3d(ii); end %need this data structure for camera's getframe method.
+p3dCell = cell(nLM,1);
+for ii=1:nLM, p3dCell{ii}=p3d(ii); end %need this data structure for camera's getframe method.
 lmXYZ = cell2mat(arrayfun(@(p) p.P,p3d,'UniformOutput',false)');
 lmColor = cell2mat(arrayfun(@(p) p.graphicHandle.CData,p3d,'UniformOutput',false)');
 lmTable = table(lmXYZ,lmColor);
@@ -49,14 +53,14 @@ camera=camera3d(worldAxes);
 camera.plot;
 
 %% Simulate
-Z = zeros(tPointsAmount,n,2);
+Z = zeros(tPointsAmount,nLM,2);
 O = zeros(tPointsAmount-1,4,4);
 for ii=1:tPointsAmount
     camera.computePose(traj.poses(:,:,ii));
     
     %gather visual data, assuming perfect data assosication, and always
     %visible landmarks
-    for jj=1:n
+    for jj=1:nLM
         [u,v] = camera.ProjectOnImage(p3d(jj));
         Z(ii,jj,:) = [u,v]+STDv*randn(1,2);
     end
@@ -67,7 +71,7 @@ for ii=1:tPointsAmount
         Tiim1 = traj.poses(:,:,ii-1); Riim1 = Tiim1(1:3,1:3); tiim1 = Tiim1(1:3,4);
         
         R = Rii'*Riim1;  
-        t = Rii'*(tiim1-tii); %t(ii)_ii->iim1
+        t = Rii'*(tiim1-tii)+STDt*randn(3,1); %t(ii)_ii->iim1
         O(ii-1,:,:) = [R,t;0,0,0,1];
     end
     %plot image and camera
@@ -76,13 +80,14 @@ for ii=1:tPointsAmount
     traj.frames{ii} = frame;
     image(cameraAxes,frame);
 end
-%% 
+
+cameraInstrincs.K = camera.K;
+cameraInstrincs.imageSize = [camera.w,camera.h];
+
 disp('data generated sucessfully, and is placed into workspace');
-disp('Now storing it in /BundleAdjustment/BAData.mat')
-disp('Reminder: function handles accept x - [x,y,theta] and then l - [lx,ly,lz]');
-
-[fhz,fhz_x,fhz_l] = camera.compute2DMeasurementModel; %measurement model: [u;v] = h(x,l)
-
+%%  Save Data to file
 proj = matlab.project.rootProject;
 filename = fullfile(proj.RootFolder,'SLAM','SLAMData');
-save(filename,'traj','lmTable','fhz','fhz_x','fhz_l','Z','O','STDv');
+save(filename,'traj','lmTable','cameraInstrincs','Z','O','STDv','STDt');
+
+disp('Now storing it in /SLAM/SLAMData.mat')

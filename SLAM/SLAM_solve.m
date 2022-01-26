@@ -1,5 +1,14 @@
 %% Load Data and Import Solver
 data = load('SLAMData.mat');
+%% Extrac Physical
+fx = data.cameraInstrincs.K(1,1);
+fy = data.cameraInstrincs.K(2,2);
+px = data.cameraInstrincs.K(1,3);
+py = data.cameraInstrincs.K(2,3);
+imageSize = data.cameraInstrincs.imageSize;
+focalLength = [fx,fy];
+principalPoint = [px,py];
+intrinsics = cameraIntrinsics(focalLength,principalPoint,imageSize);
 %% Extract measurements
 O = data.O;
 Z = data.Z;
@@ -8,29 +17,15 @@ lmAmount = size(Z,2);
 STDv = data.STDv;
 %% Extract ground truth
 trajgt = data.traj;
-T1tG =  trajgt.poses(:,:,1);
-% T1tG(1:3,1:3) = T1tG(1:3,1:3)';
-%%
-fig = figure;
-ax = axes(fig); hold(ax,'on'); grid('on');
-view(3); axis('equal');
-xlabel('x'); ylabel('y'); zlabel('z');
-T = eye(4);
-for ii=1:size(O,1)
-    Trel = inv(squeeze(O(ii,:,:)));
-    T = Trel*T;
-    Tplot = T1tG*T;
-    scatter3(Tplot(1,4),Tplot(2,4),Tplot(3,4),'filled');
-    drawnow; pause(0.5);
-end
+T1tG =  trajgt.poses(:,:,1); %use this just for laying out on same axes
 %% Integrate odometrey for initial estimate
 initialEstimate = gtsam.Values;
 T = eye(4);
 initialEstimate.insert(gtsam.symbol('x',1),gtsam.Pose3(T1tG*T));
-for ii=2:size(O,1)
+for ii=1:size(O,1)
     Trel = inv(squeeze(O(ii,:,:)));
     T = Trel*T;
-    initialEstimate.insert(gtsam.symbol('x',ii),gtsam.Pose3(T1tG*T));
+    initialEstimate.insert(gtsam.symbol('x',ii+1),gtsam.Pose3(T1tG*T));
 end
 figure();
 gtsam.plot3DTrajectory(initialEstimate, '*-k' ,200);
@@ -39,21 +34,28 @@ grid('on'); view(3); axis('equal');
 xlabel('x'); ylabel('y'); zlabel('z');
 %% Solve SLAM based VAN
 %following the example in MonocularVOExample
+Sr = 0 * ones(3,1);
+St = 0.1 * ones(3,1);
+noiseModel = gtsam.noiseModel.Diagonal.Sigmas([Sr ; St ]);
 
 graph = gtsam.NonlinearFactorGraph;
-zModel = gtsam.noiseModel.Isotropic.Sigma(1,STDv); %Noise sigma is 1cm, assuming metric measurements
-
 for ii=2:tAmount
-    key = ii;
-    for jj = 1:lmAmount %all lm visible the entire time
-        pA = gtsam.Point2(squeeze(Z(ii,jj,:)));
-        pB = gtsam.Point2(squeeze(Z(ii-1,jj,:)));
-        graph.add(gtsam.EssentialMatrixFactor(key, pA, pB, zModel));
-    end
+    pii = squeeze(Z(ii,:,:));
+    piim1 = squeeze(Z(ii-1,:,:));
+    [E,~,status] = estimateEssentialMatrix(piim1,pii,intrinsics);
+    [R,t] = relativeCameraPose(E,intrinsics,pii,piim1);
+    T = [R,t';0,0,0,1];
+    graph.add(gtsam.BetweenFactorPose3(gtsam.symbol('x',ii),...
+        gtsam.symbol('x',ii-1),...
+        gtsam.Pose3(T),...
+        noiseModel));
 end
-
-initialEstimate = gtsam.Values;
 %%
 optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initialEstimate);
 result = optimizer.optimizeSafely();
-result.print(sprintf('\nFinal result:\n'));
+% marginals = gtsam.Marginals(graph, result);
+%%
+figure();
+gtsam.plot3DTrajectory(result, '*-b') ,[],[],marginals)
+view([0,-1,0]); axis equal; axis tight; grid on;
+title('\color{blue}Optimized Trajectory');

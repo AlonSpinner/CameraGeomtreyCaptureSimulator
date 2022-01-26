@@ -30,33 +30,33 @@ classdef camera3d < handle
         end
         function pose = computePose(obj,pos,targetVec,upVec)
             if nargin == 2 %full pose was given in pos - a 4x4 matrix
-                obj.pose = pos; 
+                obj.pose = pos;
                 obj.computeProjMat(); %if updated pose, also need to update projmat
                 return
             end
-            
+
             %ELSE
             %all inputs are column vecs
-                % pos - translation vector of camera pin hole center in
-                % global frame. %t(G)G->C
-                % targetVec and upVec are for rotation
+            % pos - translation vector of camera pin hole center in
+            % global frame. %t(G)G->C
+            % targetVec and upVec are for rotation
 
             %follows Matlab Camrea Conventions: https://www.mathworks.com/help/vision/gs/coordinate-systems.html
             % Z is forward #targetVec
             % Y is pointing down -#upVec
             % X is to the right
-            
+
             x = cross(targetVec,upVec);
-            RCtG=[x,-upVec,targetVec]; 
-            
-            pose=[RCtG,pos;... 
+            RCtG=[x,-upVec,targetVec];
+
+            pose=[RCtG,pos;...
                 [0 0 0 1]];
             obj.pose = pose; %RC2G | t(G)G->C
             obj.computeProjMat(); %if updated pose, also need to update projmat
         end
         function plot(obj)
             plotpose=rigid3d(obj.pose');
-            
+
             if isvalid(obj.graphicHandle) &&...
                     isa(obj.graphicHandle,'vision.graphics.Camera') %only update
                 obj.graphicHandle.AbsolutePose=plotpose;
@@ -81,7 +81,7 @@ classdef camera3d < handle
                     'YLim',[0,obj.h]);
                 axis(obj.imagePlaneAxes,'manual'); %mode - manual, style - image or not?
             end
-            
+
             cla(obj.imagePlaneAxes);
             hold(obj.imagePlaneAxes,'on');
             for ii=1:length(varargin)
@@ -103,7 +103,7 @@ classdef camera3d < handle
                             'MarkerFaceColor',varargin{ii}.graphicHandle.MarkerFaceColor);
                 end
             end
-            
+
             F = getframe(obj.imagePlaneAxes);% Grab the rendered frame
             image=F.cdata;
         end
@@ -136,7 +136,7 @@ classdef camera3d < handle
             u_bar = P*[l;1];
             u = u_bar(1)/u_bar(3);
             v = u_bar(2)/u_bar(3);
-            
+
             hz = [u;v];
             hz_x = jacobian(hz,x);
             hz_l = jacobian(hz,l);
@@ -148,11 +148,10 @@ classdef camera3d < handle
         function delete(obj) %destructor
             delete(obj.graphicHandle);
         end
+        function computeK(obj)
+            obj.K=[obj.fx,0,obj.px;
+                0,obj.fy,obj.py;
+                0,0,1];
+        end
     end
-end
-%% Supporting Functions
-function computeK(obj)
-obj.K=[obj.fx,0,obj.px;
-    0,obj.fy,obj.py;
-    0,0,1];
 end
