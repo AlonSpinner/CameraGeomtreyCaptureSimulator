@@ -5,7 +5,7 @@
 a = 3; % side length of world containing box
 nLM = 12; % number of landmarks
 dt = 0.1; %[s]
-T=1; %[s]
+T=10; %[s]
 tPointsAmount = floor(T/dt); %amount of frames
 
 %----------------Measurement Noise;
@@ -22,9 +22,9 @@ cameraAxes = subplot(1,2,2,'parent',fig);
 %https://www.mathworks.com/matlabcentral/answers/8266-convert-array-to-argument-list
 p3dCell = cell(nLM,1);
 for ii=1:nLM, p3dCell{ii}=p3d(ii); end %need this data structure for camera's getframe method.
-lmXYZ = cell2mat(arrayfun(@(p) p.P,p3d,'UniformOutput',false)');
-lmColor = cell2mat(arrayfun(@(p) p.graphicHandle.CData,p3d,'UniformOutput',false)');
-lmTable = table(lmXYZ,lmColor);
+XYZ = cell2mat(arrayfun(@(p) p.P,p3d,'UniformOutput',false)');
+Color = cell2mat(arrayfun(@(p) p.graphicHandle.CData,p3d,'UniformOutput',false)');
+lmTable = table(XYZ,Color);
 %% Run Simulation for Data
 theta = linspace(0,2*pi,tPointsAmount);
 x = a/2*cos(theta)';
