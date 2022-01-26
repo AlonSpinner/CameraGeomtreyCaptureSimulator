@@ -31,12 +31,12 @@ traj.TargetVector = -traj.pos/(a/2);
 traj.upVector = repmat([0,0,1],[tPointsAmount,1]);
 traj.poses = zeros(4,4,tPointsAmount);
 for ii=1:tPointsAmount
-    pos = traj.pos(ii,:)';
+    tCinG = traj.pos(ii,:)';
     tVec = traj.TargetVector(ii,:)';
     upVec = traj.upVector(ii,:)';
-    x = cross(tVec,upVec);
-    RGtC=[x,-upVec,tVec];
-    traj.poses(:,:,ii)=[RGtC,pos;...
+    xVec = cross(tVec,upVec);
+    RC2G=[xVec,-upVec,tVec];
+    traj.poses(:,:,ii)=[RC2G,tCinG;...
         [0 0 0 1]];
 end
 traj.frames = cell(1,tPointsAmount); %initalize for frames, that will be collected later
@@ -50,21 +50,31 @@ camera.plot;
 
 %% Simulate
 Z = zeros(tPointsAmount,n,2);
+O = zeros(tPointsAmount-1,4,4);
 for ii=1:tPointsAmount
     camera.computePose(traj.poses(:,:,ii));
     
-    %gather data
+    %gather visual data, assuming perfect data assosication, and always
+    %visible landmarks
     for jj=1:n
         [u,v] = camera.ProjectOnImage(p3d(jj));
         Z(ii,jj,:) = [u,v]+STDv*randn(1,2);
+    end
+
+    if ii > 1
+        %reminder,traj.pose holds info as Rii  = Rii2G ; tii = t(G)G->ii
+        Tii = traj.poses(:,:,ii); Rii = Tii(1:3,1:3); tii = Tii(1:3,4);
+        Tiim1 = traj.poses(:,:,ii-1); Riim1 = Tiim1(1:3,1:3); tiim1 = Tiim1(1:3,4);
+        
+        R = Rii'*Riim1;  
+        t = Rii'*(tii-tiim1);
+        O(ii-1,:,:) = [R,t;0,0,0,1];
     end
     %plot image and camera
     camera.plot;
     frame = camera.getframe(p3dCell{:}); %this here is exact, no noise added
     traj.frames{ii} = frame;
     image(cameraAxes,frame);
-    
-    pause(0.01);
 end
 %% 
 disp('data generated sucessfully, and is placed into workspace');
@@ -75,4 +85,4 @@ disp('Reminder: function handles accept x - [x,y,theta] and then l - [lx,ly,lz]'
 
 proj = matlab.project.rootProject;
 filename = fullfile(proj.RootFolder,'SLAM','SLAMData');
-save(filename,'traj','lmTable','fhz','fhz_x','fhz_l','Z','STDv');
+save(filename,'traj','lmTable','fhz','fhz_x','fhz_l','Z','O','STDv');
