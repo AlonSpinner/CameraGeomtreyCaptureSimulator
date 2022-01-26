@@ -5,7 +5,7 @@
 a = 3; % side length of world containing box
 n = 12; % number of points
 dt = 0.1;
-T=10;
+T=1;
 tPointsAmount = floor(T/dt);
 STDv = 2;
 %%
@@ -67,7 +67,7 @@ for ii=1:tPointsAmount
         Tiim1 = traj.poses(:,:,ii-1); Riim1 = Tiim1(1:3,1:3); tiim1 = Tiim1(1:3,4);
         
         R = Rii'*Riim1;  
-        t = Rii'*(tii-tiim1);
+        t = Rii'*(tiim1-tii); %t(ii)_ii->iim1
         O(ii-1,:,:) = [R,t;0,0,0,1];
     end
     %plot image and camera

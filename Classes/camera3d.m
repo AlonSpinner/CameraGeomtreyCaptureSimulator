@@ -47,11 +47,11 @@ classdef camera3d < handle
             % X is to the right
             
             x = cross(targetVec,upVec);
-            RGtC=[x,-upVec,targetVec]; 
+            RCtG=[x,-upVec,targetVec]; 
             
-            pose=[RGtC,pos;... 
+            pose=[RCtG,pos;... 
                 [0 0 0 1]];
-            obj.pose = pose; %t(G)G->C, RG2C
+            obj.pose = pose; %RC2G | t(G)G->C
             obj.computeProjMat(); %if updated pose, also need to update projmat
         end
         function plot(obj)
