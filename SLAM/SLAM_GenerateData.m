@@ -17,7 +17,10 @@ cameraAxes = subplot(1,2,2,'parent',fig);
 %stupid matlab syntax. cell arrays can be converted into varargin
 %https://www.mathworks.com/matlabcentral/answers/8266-convert-array-to-argument-list
 p3dCell = cell(n,1);
-for ii=1:n, p3dCell{ii}=p3d(ii); end
+for ii=1:n, p3dCell{ii}=p3d(ii); end %need this data structure for camera's getframe method.
+lmXYZ = cell2mat(arrayfun(@(p) p.P,p3d,'UniformOutput',false)');
+lmColor = cell2mat(arrayfun(@(p) p.graphicHandle.CData,p3d,'UniformOutput',false)');
+lmTable = table(lmXYZ,lmColor);
 %% Run Simulation for Data
 theta = linspace(0,2*pi,tPointsAmount);
 x = a/2*cos(theta)';
@@ -36,6 +39,7 @@ for ii=1:tPointsAmount
     traj.poses(:,:,ii)=[RGtC,pos;...
         [0 0 0 1]];
 end
+traj.frames = cell(1,tPointsAmount); %initalize for frames, that will be collected later
 
 hold(worldAxes,'on');
 h_track=plot3(worldAxes,traj.pos(:,1),traj.pos(:,2),traj.pos(:,3),'color','black');
@@ -57,6 +61,7 @@ for ii=1:tPointsAmount
     %plot image and camera
     camera.plot;
     frame = camera.getframe(p3dCell{:}); %this here is exact, no noise added
+    traj.frames{ii} = frame;
     image(cameraAxes,frame);
     
     pause(0.01);
@@ -66,9 +71,8 @@ disp('data generated sucessfully, and is placed into workspace');
 disp('Now storing it in /BundleAdjustment/BAData.mat')
 disp('Reminder: function handles accept x - [x,y,theta] and then l - [lx,ly,lz]');
 
-[fhz,fhz_x,fhz_l] = camera.compute2DMeasurementModel;
-
+[fhz,fhz_x,fhz_l] = camera.compute2DMeasurementModel; %measurement model: [u;v] = h(x,l)
 
 proj = matlab.project.rootProject;
 filename = fullfile(proj.RootFolder,'SLAM','SLAMData');
-save(filename,'traj','fhz','fhz_x','fhz_l','Z','STDv');
+save(filename,'traj','lmTable','fhz','fhz_x','fhz_l','Z','STDv');
