@@ -9,7 +9,7 @@ classdef line3d < handle
     end
     methods
         function obj=line3d(P,worldAxes) %constructor
-            if nargin<3 %worldAxes not provided
+            if nargin<2 %worldAxes not provided
                 worldAxes=gca;
             end
             P0=P(1,:); P1=P(2,:);

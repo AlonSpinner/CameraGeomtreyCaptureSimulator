@@ -25,11 +25,11 @@ for ii=1:nLM, p3dCell{ii}=p3d(ii); end %need this data structure for camera's ge
 XYZ = cell2mat(arrayfun(@(p) p.P,p3d,'UniformOutput',false)');
 Color = cell2mat(arrayfun(@(p) p.graphicHandle.CData,p3d,'UniformOutput',false)');
 lmTable = table(XYZ,Color);
-%% Run Simulation for Data
+%% Build Trajectory
 theta = linspace(0,2*pi,tPointsAmount);
 x = a/2*cos(theta)';
 y = a/2*sin(theta)';
-%% Build Trajectory
+
 traj.pos = [x,y,zeros(tPointsAmount,1)];
 traj.TargetVector = -traj.pos/(a/2);
 traj.upVector = repmat([0,0,1],[tPointsAmount,1]);

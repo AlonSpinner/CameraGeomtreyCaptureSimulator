@@ -1,23 +1,27 @@
-function [camera,pairs,box,worldfig,worldAxes]=Test_CreateScene()
+function [camera,pairs,box,worldfig,worldAxes]=Test_CreateScene(worldAxes)
 %note: any object not returned is deleted from function workspace
 %activating its destructor!!
 
-%Define World Axes
-worldfig=figure;
-worldAxes=axes(worldfig,...
-    'DataAspectRatioMode','manual');
+if nargin < 1
+    worldfig=figure;
+    worldAxes=axes(worldfig);
+end
+set(worldAxes,'DataAspectRatioMode','manual');
+view(worldAxes,3);
+hold(worldAxes,"on");
+xlabel(worldAxes,'x'); ylabel(worldAxes,'y'); zlabel(worldAxes,'z'); 
 %% Define Objects
 %box
 lengths=[3,1,1];
 center=[0,0.5,0.5];
 box=hyperrectangle3d(lengths,center,worldAxes);
 box.plot('facecolor','none');
-view(3);
-xlabel('x'); ylabel('y'); zlabel('z');
 %Define Camera
-position=[0,0.5,0.5];
-targetVector=[1,0,0];
-camera=camera3d(position,targetVector,worldAxes);
+position = [0,0.5,0.5]';
+targetVector = [1,0,0]';
+upVector = [0 0 1]';
+camera=camera3d(worldAxes);
+camera.computePose(position,targetVector,upVector)
 camera.plot;
 
 %-----------------Pair1
