@@ -3,10 +3,8 @@
 
 %-----------------Hyper Parameters:
 a = 3; % side length of world containing box
-nLM = 12; % number of landmarks
-dt = 0.1; %[s]
-T=10; %[s]
-tPointsAmount = floor(T/dt); %amount of frames
+nLM = 30; % number of landmarks
+nPoses = 30; %amount of camera poses
 
 %----------------Measurement Noise;
 STDv = 2; %visual
@@ -26,15 +24,15 @@ XYZ = cell2mat(arrayfun(@(p) p.P,p3d,'UniformOutput',false)');
 Color = cell2mat(arrayfun(@(p) p.graphicHandle.CData,p3d,'UniformOutput',false)');
 lmTable = table(XYZ,Color);
 %% Build Trajectory
-theta = linspace(0,2*pi,tPointsAmount);
+theta = linspace(0,2*pi,nPoses);
 x = a/2*cos(theta)';
 y = a/2*sin(theta)';
 
-traj.pos = [x,y,zeros(tPointsAmount,1)];
+traj.pos = [x,y,zeros(nPoses,1)];
 traj.TargetVector = -traj.pos/(a/2);
-traj.upVector = repmat([0,0,1],[tPointsAmount,1]);
-traj.poses = zeros(4,4,tPointsAmount);
-for ii=1:tPointsAmount
+traj.upVector = repmat([0,0,1],[nPoses,1]);
+traj.poses = zeros(4,4,nPoses);
+for ii=1:nPoses
     tCinG = traj.pos(ii,:)';
     tVec = traj.TargetVector(ii,:)';
     upVec = traj.upVector(ii,:)';
@@ -43,7 +41,7 @@ for ii=1:tPointsAmount
     traj.poses(:,:,ii)=[RC2G,tCinG;...
         [0 0 0 1]];
 end
-traj.frames = cell(1,tPointsAmount); %initalize for frames, that will be collected later
+traj.frames = cell(1,nPoses); %initalize for frames, that will be collected later
 
 hold(worldAxes,'on');
 h_track=plot3(worldAxes,traj.pos(:,1),traj.pos(:,2),traj.pos(:,3),'color','black');
@@ -53,9 +51,9 @@ camera=camera3d(worldAxes);
 camera.plot;
 
 %% Simulate
-Z = zeros(tPointsAmount,nLM,2);
-O = zeros(tPointsAmount-1,4,4);
-for ii=1:tPointsAmount
+Z = zeros(nPoses,nLM,2);
+O = zeros(nPoses-1,4,4);
+for ii=1:nPoses
     camera.computePose(traj.poses(:,:,ii));
     
     %gather visual data, assuming perfect data assosication, and always

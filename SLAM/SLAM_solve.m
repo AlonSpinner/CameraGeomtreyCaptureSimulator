@@ -20,8 +20,8 @@ gt_T1tG =  gt_traj.poses(:,:,1);
 gt_lmTable = data.lmTable;
 gt_lm1 = data.lmTable.XYZ(1,:);
 %% Optimizer Parameters
-pointNoiseSigma = 0.01*0.1;
-poseNoiseSigmas = 0.001*[0.001 0.001 0.001 0.1 0.1 0.1]';
+pointNoiseSigma = 0.1*0.1;
+poseNoiseSigmas = 0.1*[0.001 0.001 0.001 0.1 0.1 0.1]';
 %% Integrate odometrey for initial estimate
 initialEstimate = gtsam.Values;
 T = eye(4);
@@ -34,7 +34,6 @@ end
 
 for ii=1:lmAmount
     p =  gtsam.Point3(data.lmTable.XYZ(ii,:)');
-    p = p.retract(0.1*randn(3,1)); %add noise
     initialEstimate.insert(gtsam.symbol('p',ii), p);
 end
 
@@ -80,12 +79,15 @@ figure;
 hold on;
 
 gtsam.plot3DPoints(result, [], marginals);
-% gtsam.plot3DPoints(result);
 gtsam.plot3DTrajectory(result,'*',1, 1,marginals);
-% gtsam.plot3DTrajectory(result, '*', 1, 8, marginals);
+% gtsam.plot3DTrajectory(result,'*',1, 1);
 
 axis equal; grid on;
 view(3)
 colormap('hot')
 xlabel('x'); ylabel('y'); zlabel('z');
 title('results');
+%%
+T1tG = result.at(gtsam.symbol('x',1)).matrix;
+x1Pos = T1tG(1:3,4);
+scatter3(x1Pos(1),x1Pos(2),x1Pos(3),100,'black');

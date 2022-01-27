@@ -9,7 +9,7 @@ end
 % note: any object not returned is deleted from function workspace
 %activating its destructor!!
 
-s = 0.2; % Numeric factor here to scale the points togther
+s = 0.3; % Numeric factor here to scale the points togther
 %% Define World Axes
 set(worldAxes,'DataAspectRatioMode','manual');
 view(worldAxes,3);
