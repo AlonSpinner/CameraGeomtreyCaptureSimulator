@@ -13,6 +13,7 @@ Z = data.Z;
 tAmount = size(Z,1);
 lmAmount = size(Z,2);
 STDv = data.STDv;
+STDt = data.STDt;
 
 %Extract ground truth
 gt_traj = data.traj;
@@ -55,6 +56,14 @@ for ii=1:size(Z,1) %camera poses
             measurementNoise, gtsam.symbol('x',ii), gtsam.symbol('p',jj),K));
     end
 end
+%% add factors for all O measurements
+Sr = 1e-3 * ones(3,1);
+St = STDt * ones(3,1);
+odomNoise = gtsam.noiseModel.Diagonal.Sigmas([Sr ; St ]);
+for ii=1:size(O,1) %camera poses
+    graph.add(gtsam.BetweenFactorPose3(gtsam.symbol('x',ii+1),gtsam.symbol('x',ii),... %ORDER MATTERS!!
+        gtsam.Pose3(squeeze(O(ii,:,:))), odomNoise));
+end
 %% Add Gaussian priors for a pose and a landmark to constrain the system
 posePriorNoise  = gtsam.noiseModel.Diagonal.Sigmas(poseNoiseSigmas);
 graph.add(gtsam.PriorFactorPose3(gtsam.symbol('x',1), gtsam.Pose3(gt_T1tG), posePriorNoise));
@@ -91,3 +100,13 @@ title('results');
 T1tG = result.at(gtsam.symbol('x',1)).matrix;
 x1Pos = T1tG(1:3,4);
 scatter3(x1Pos(1),x1Pos(2),x1Pos(3),100,'black');
+
+%% Initial Conditions on ground truth
+figure();
+gtsam.plot3DTrajectory(initialEstimate, '*-k' ,200);
+view(3); hold('on');
+gtsam.plot3DPoints(initialEstimate,'m');
+grid('on'); view(3); axis('equal');
+xlabel('x'); ylabel('y'); zlabel('z');
+gtsam.plot3DPoints(result, [], marginals);
+gtsam.plot3DTrajectory(result,'*',1, 1,marginals);
