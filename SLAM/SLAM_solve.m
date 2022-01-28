@@ -76,11 +76,11 @@ parameters.setVerbosityLM('trylambda');
 
 optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initialEstimate, parameters);
 
-for i=1:5
-    optimizer.iterate();
-end
+% for i=1:5
+%     optimizer.iterate();
+% end
+optimizer.optimizeSafely();
 result = optimizer.values();
-result.print(sprintf('\nFinal result:\n  '));
 %% Plot results with covariance ellipses
 marginals = gtsam.Marginals(graph, result);
 
@@ -110,3 +110,6 @@ grid('on'); view(3); axis('equal');
 xlabel('x'); ylabel('y'); zlabel('z');
 gtsam.plot3DPoints(result, [], marginals);
 gtsam.plot3DTrajectory(result,'*',1, 1,marginals);
+
+scatter3(gt_traj.pos(:,1),gt_traj.pos(:,2),gt_traj.pos(:,3),100,"black",'filled');
+scatter3(gt_lmTable.XYZ(:,1),gt_lmTable.XYZ(:,2),gt_lmTable.XYZ(:,3),100,"magenta",'filled');
